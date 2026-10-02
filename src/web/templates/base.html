@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agente de Lançamentos · Conta Azul</title>
+  <link rel="stylesheet" href="/static/estilo.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="topo-linha">
+      <img src="/static/logo.png" alt="Agente de Lançamentos" class="logo">
+      <div class="titulo">
+        <span class="titulo-nome">Agente Conta Azul</span>
+        <span class="titulo-sub">Lançamentos automáticos</span>
+      </div>
+      <div class="topo-direita">
+        {% if ambiente == "producao" %}
+          <span class="selo selo-producao">● Produção</span>
+        {% else %}
+          <span class="selo selo-teste">● Teste — não afeta a Conta Azul real</span>
+        {% endif %}
+        {% if usuario %}
+          <span class="usuario" title="{{ 'Conta Microsoft 365' if usuario_logado else 'Nome informado neste navegador' }}">
+            <span class="avatar">{{ usuario[:1]|upper }}</span>{{ usuario }}
+          </span>
+          {% if login_microsoft %}<a href="/sair" class="sair">Sair</a>{% endif %}
+        {% endif %}
+      </div>
+    </div>
+    <nav class="abas">
+      <a href="/entrada" class="{{ 'ativa' if aba == 'entrada' }}">Entrada</a>
+      <a href="/revisao" class="{{ 'ativa' if aba == 'revisao' }}">Revisão{% if qtd_revisao %}<span class="contador">{{ qtd_revisao }}</span>{% endif %}</a>
+      <a href="/processados" class="{{ 'ativa' if aba == 'processados' }}">Processados</a>
+    </nav>
+  </header>
+
+  <main>
+    {% if mensagem %}
+      <div class="mensagem mensagem-{{ mensagem[0] }}">{{ mensagem[1] }}</div>
+    {% endif %}
+    {% block conteudo %}{% endblock %}
+  </main>
+
+  <footer class="rodape">Agente de Lançamentos Contábeis · Conta Azul + Gemini</footer>
+</body>
+</html>

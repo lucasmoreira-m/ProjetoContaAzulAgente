@@ -1,0 +1,45 @@
+# Tudo que NÃO pode entrar na imagem nem ser enviado no "az acr build ." -
+# credenciais, dados reais (PDFs, registros, aprendizado) e lixo de build.
+# Credenciais
+.env
+.env.*
+!.env.example
+secrets.toml
+**/secrets.toml
+**/env_embutido.py
+refresh_token_novo.txt
+*.token.txt
+
+# Dados reais / estado de runtime (vão para o volume do Azure Files, não para a imagem)
+entrada/
+processados/
+revisao/
+descartados/
+backups/
+atualizacoes/
+fornecedores_registry.json
+historico_centros_funcionarios.json
+arquivos_processados_registry.json
+.access_token_cache.json
+*.lock
+*.zip
+
+# Ambiente e build locais
+venv/
+.venv/
+dist/
+build/
+*.exe
+*.spec
+__pycache__/
+**/__pycache__/
+.pytest_cache/
+.git/
+.vscode/
+.claude/
+
+# Não usados no Azure (o Dockerfile só copia src/ e os requirements)
+tests/
+atalhos/
+README.md
+CHANGELOG.md

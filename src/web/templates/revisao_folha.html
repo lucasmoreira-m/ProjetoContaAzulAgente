@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% import "_pecas.html" as p %}
+{% block conteudo %}
+{{ p.cabecalho('📑 Folha de pagamento', 'Competência ' ~ (form.competencia or '?'), info, item_id) }}
+
+<div class="grade-revisao">
+  {{ p.visualizador(arquivo, eh_imagem) }}
+
+  <div>
+    {% if erro and not tabela_enviada %}<div class="mensagem mensagem-erro">{{ erro }}</div>{% endif %}
+    <p class="dica">Cada tabela do documento é um lançamento separado. Aprove uma de cada vez. Quando todas as
+      relevantes estiverem lançadas, o documento vai para Processados.</p>
+
+    {% for t in form.tabelas %}
+      {% if t.lancada %}
+        <section class="cartao tabela-lancada">
+          <h2>{{ t.titulo }}</h2>
+          <div class="mensagem mensagem-ok compacta">✅ Já lançado. Protocolo: {{ t.protocolo or '?' }}</div>
+        </section>
+      {% else %}
+        {% set v = t.valores %}
+        {% set desta = tabela_enviada == t.chave %}
+        <form action="/revisao/{{ item_id }}/folha/{{ t.chave|urlencode }}/aprovar" method="post" class="cartao formulario" id="tabela-{{ loop.index }}">
+          <h2>{{ t.titulo }}</h2>
+          {% if t.ignorada %}
+            <div class="mensagem mensagem-erro compacta">🔴 <strong>Ignorado / revisão — não enviado para o ERP:</strong> {{ t.motivo }}<br>
+              A IA não encontrou marcação visual (círculo/destaque) nesta tabela. Se o documento é legítimo, complete os dados e aprove para lançar manualmente.</div>
+          {% else %}
+            <div class="mensagem mensagem-erro compacta">{{ t.motivo or 'Pendente de revisão.' }}</div>
+          {% endif %}
+          {% if desta and erro %}<div class="mensagem mensagem-erro compacta">{{ erro }}</div>{% endif %}
+
+          {{ p.campo_nome(usuario_logado, usuario) }}
+          <div class="linha-3">
+            <label>Valor total (R$)
+              <input type="text" name="valor" value="{{ v.valor }}" inputmode="decimal" required>
+            </label>
+            <label>Vencimento (DD/MM/AAAA)
+              <input type="text" name="data_vencimento" value="{{ v.data_vencimento }}" required>
+            </label>
+            <label>Competência (DD/MM/AAAA)
+              <input type="text" name="data_competencia" value="{{ v.data_competencia }}">
+            </label>
+          </div>
+
+          <label>Descrição do lançamento
+            <input type="text" name="descricao" value="{{ v.descricao }}">
+          </label>
+
+          <div class="linha-2">
+            {{ p.selecao("categoria_id", "Categoria", form.categorias, v.categoria_id) }}
+            {{ p.selecao("contato_id", "Contato (fornecedor/funcionário)", form.pessoas, v.contato_id,
+                         'Sugerido: ' ~ (t.fornecedor_sugerido or '—')) }}
+          </div>
+          {% if form.contas_financeiras %}
+            {{ p.selecao("conta_financeira_id", "Conta financeira", form.contas_financeiras, v.conta_financeira_id, obrigatorio=False) }}
+          {% endif %}
+
+          {{ p.rateio(t.linhas_rateio, form.centros_custo) }}
+          {% if t.centro_por_revisao_manual %}
+            <p class="dica">🧠 O centro de custo deste funcionário não estava no documento nem no histórico. Se você escolher
+              um único centro, ele fica aprendido para os próximos lançamentos deste funcionário.</p>
+          {% endif %}
+
+          {{ p.orientacao(v.orientacao, "ex: conferir sempre se a data bate com o TRCT") }}
+          <p class="dica">Cada aprovação conta para a maturação deste tipo de lançamento: depois de algumas, o agente passa a lançar sozinho.</p>
+          {{ p.aviso_duplicata(duplicata if desta else None) }}
+          {{ p.botoes_aprovar(duplicata if desta else None, "✓ Aprovar e lançar esta tabela") }}
+        </form>
+      {% endif %}
+    {% endfor %}
+
+    {{ p.descartar(item_id, usuario_logado, usuario, "Descartar documento inteiro") }}
+  </div>
+</div>
+<script src="/static/revisao.js"></script>
+{% endblock %}

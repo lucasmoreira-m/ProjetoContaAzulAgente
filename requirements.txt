@@ -1,0 +1,36 @@
+# Versões fixadas (Escopo 6 da auditoria - "pin de versão", supply chain).
+# Pinadas nas versões REALMENTE instaladas e testadas no venv deste projeto
+# (validadas com chamadas reais ao Gemini e à Conta Azul nesta sessão) - não
+# nas "mais recentes estáveis" genéricas, que divergiram do ambiente real e
+# teriam causado downgrade quebrando a integração com o Gemini
+# (google-genai tem API bem diferente entre versões 0.x e 2.x).
+#
+# Depois de instalar, rode `pip-audit` (ou `safety check`) periodicamente
+# para checar vulnerabilidades conhecidas (CVEs) nas dependências:
+#   pip install pip-audit --break-system-packages
+#   pip-audit
+
+requests==2.34.2
+urllib3==2.7.0
+python-dotenv==1.2.3
+pydantic==2.13.4
+google-genai==2.19.0
+filelock==3.20.3
+# Leitura da camada de texto do PDF para detectar prompt injection (src/utils/deteccao_injecao.py)
+pypdf==6.19.0
+
+# Painel web (FastAPI, 2026-09-30) - substituiu o Streamlit
+fastapi==0.142.2
+uvicorn==0.52.4
+Jinja2==3.1.6
+python-multipart==0.0.32
+# Login Microsoft 365 dentro do painel (src/web/login_microsoft.py) e cookie de sessão assinado
+msal==1.39.0
+itsdangerous==2.2.0
+# Testes do painel (fastapi.testclient)
+httpx==0.28.1
+
+# Ferramentas de qualidade/segurança recomendadas (dev only)
+# ruff==0.7.0
+# mypy==1.13.0
+# pip-audit==2.7.3

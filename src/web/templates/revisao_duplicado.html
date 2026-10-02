@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% import "_pecas.html" as p %}
+{% block conteudo %}
+{{ p.cabecalho('♻️ Possível duplicata de arquivo', info.documento_original or 'Documento', info, item_id, atualizar=False) }}
+
+<div class="grade-revisao">
+  {{ p.visualizador(arquivo, eh_imagem) }}
+
+  <div>
+    <section class="cartao">
+      <h2>Arquivo idêntico a um já processado</h2>
+      <div class="mensagem mensagem-aviso compacta">{{ info.motivo or 'Arquivo com conteúdo idêntico a um já processado antes.' }}</div>
+      <table>
+        <tbody>
+          <tr><th>Nome do arquivo na época</th><td>{{ anterior.nome_arquivo or '?' }}</td></tr>
+          <tr><th>Processado em</th><td>{{ anterior.processado_em or '?' }}</td></tr>
+          <tr><th>Resultado na época</th><td>{% if anterior.sucesso %}<span class="estado estado-ok">Lançado com sucesso</span>{% else %}<span class="estado estado-revisao">Não foi lançado</span>{% endif %}</td></tr>
+          {% if anterior.protocolo %}<tr><th>Protocolo</th><td>{{ anterior.protocolo }}</td></tr>
+          {% elif anterior.motivo %}<tr><th>Motivo na época</th><td>{{ anterior.motivo }}</td></tr>{% endif %}
+        </tbody>
+      </table>
+      <p class="dica" style="margin-top:14px">A proteção compara o <strong>conteúdo</strong> do arquivo, não o que ele representa.
+        Se for o mesmo documento, é seguro descartar: nada precisa ser feito de novo. Se for uma cobrança diferente que por
+        coincidência gerou o mesmo arquivo (raro), exporte ou escaneie o PDF de novo e envie pela aba Entrada.</p>
+    </section>
+
+    {{ p.descartar(item_id, usuario_logado, usuario, "Descartar (confirmado, é duplicata)") }}
+  </div>
+</div>
+{% endblock %}

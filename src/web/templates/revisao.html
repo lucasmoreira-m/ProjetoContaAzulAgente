@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block conteudo %}
+{% if cadastros_pendentes %}
+<section class="cartao cartao-destaque">
+  <div class="cartao-cabecalho">
+    <div>
+      <h2>Cadastros que faltam na Conta Azul</h2>
+      <p class="subtitulo">Juntando todos os documentos abaixo. Crie o que fizer sentido na Conta Azul e depois revise os itens.</p>
+    </div>
+  </div>
+  <div class="grade-cadastros">
+    {% for tipo, lista in cadastros_pendentes.items() %}
+      <div>
+        <h3>{{ tipo }}</h3>
+        <ul class="lista-simples">
+          {% for c in lista|sort(attribute="nome_no_documento") %}
+            <li><strong>{{ c.nome_no_documento }}</strong>
+              {% if c.sugestao_parecida %}<span class="subtitulo">parecido com “{{ c.sugestao_parecida }}” (confira se é o mesmo)</span>
+              {% else %}<span class="subtitulo">não encontrado</span>{% endif %}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="cartao">
+  <div class="cartao-cabecalho">
+    <div>
+      <h2>Aguardando revisão ({{ itens|length }})</h2>
+      <p class="subtitulo">Documentos que o agente não lançou sozinho. Clique em Revisar para conferir, editar e aprovar.</p>
+    </div>
+  </div>
+  {% if itens %}
+    <div class="tabela-rolagem">
+      <table>
+        <thead><tr><th>Documento</th><th>Tipo</th><th>Fornecedor</th><th>Valor</th><th>Enviado por</th><th>Motivo</th><th></th></tr></thead>
+        <tbody>
+          {% for i in itens %}
+            <tr>
+              <td>
+                {% if i.arquivo %}📄 <a href="/documento/revisao/{{ i.arquivo|urlencode }}" target="_blank" rel="noopener">{{ i.documento }}</a>
+                {% else %}{{ i.documento }} <span class="estado estado-revisao">arquivo não encontrado</span>{% endif %}
+                <div class="subtitulo">{{ i.processado_em or '' }}</div>
+              </td>
+              <td><span class="etiqueta">{{ i.tipo_legivel }}</span></td>
+              <td>{{ i.fornecedor or '—' }}</td>
+              <td class="numero">{{ i.valor|brl }}</td>
+              <td>{{ i.enviado_por or '—' }}</td>
+              <td class="motivo">{{ i.motivo or '' }}</td>
+              <td class="acao">
+                <a class="botao" href="/revisao/{{ i.id|urlencode }}">Revisar</a>
+                <form action="/revisao/{{ i.id|urlencode }}/descartar" method="post" class="form-linha"
+                      onsubmit="return confirm('Descartar este documento? Ele vai para a pasta de descartados e não será lançado.');">
+                  {% if not usuario_logado %}<input type="hidden" name="aprovado_por" value="{{ usuario or '' }}">{% endif %}
+                  <button type="submit" class="botao-perigo-claro" title="Descartar">🗑</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="vazio">Nenhuma pendência no momento. 🎉</p>
+  {% endif %}
+</section>
+{% endblock %}

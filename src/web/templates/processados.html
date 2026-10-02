@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<section class="cartao">
+  <div class="cartao-cabecalho">
+    <div>
+      <h2>Lançados na Conta Azul ({{ historico|length }})</h2>
+      <p class="subtitulo">Lido dos registros locais. Esta página não consulta a Conta Azul.</p>
+    </div>
+  </div>
+  {% if historico %}
+    <div class="tabela-rolagem">
+      <table>
+        <thead><tr><th>Descrição</th><th>Valor</th><th>Vencimento</th><th>Contato</th><th>Categoria</th><th>Protocolo</th><th>Origem</th><th>Processado em</th></tr></thead>
+        <tbody>
+          {% for r in historico %}
+            <tr>
+              <td>{{ r.descricao or '(sem descrição)' }}
+                {% if r.camada_decisao == 'camada2_erp_inferido' %}<span class="selo selo-camada" title="Inferido do histórico da Conta Azul, sem aprovação humana anterior">Camada 2</span>{% endif %}
+                {% if r.camada_decisao == 'camada3_fallback_ia' %}<span class="selo selo-camada" title="Palpite da IA, sem histórico">Camada 3</span>{% endif %}
+              </td>
+              <td class="numero">{{ r.valor|brl }}</td>
+              <td>{{ r.data_vencimento|data_br }}</td>
+              <td>{{ (r.contato or {}).nome or '?' }}</td>
+              <td>{{ (r.categoria or {}).nome or '?' }}</td>
+              <td>{{ r.protocolo or '?' }}</td>
+              <td>{% if r.origem == 'automatico' %}<span class="estado estado-ok">Automático</span>{% else %}{{ r.origem or '?' }}{% endif %}</td>
+              <td>{{ r.processado_em or '?' }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="vazio">Nenhum lançamento no histórico local ainda.</p>
+  {% endif %}
+</section>
+{% endblock %}

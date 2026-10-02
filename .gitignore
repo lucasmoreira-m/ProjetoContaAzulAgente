@@ -1,0 +1,45 @@
+.env
+# Credenciais em TOML (2026-10-01) - nunca vão para o repositório
+secrets.toml
+.streamlit/secrets.toml
+.env.ana
+env_embutido.py
+refresh_token_novo.txt
+venv/
+dist/
+build/
+*.exe
+*.spec
+__pycache__/
+.pytest_cache/
+
+# Dado de runtime gerado pela aplicaÃ§Ã£o (estado operacional, nÃ£o cÃ³digo)
+fornecedores_registry.json
+historico_centros_funcionarios.json
+arquivos_processados_registry.json
+.access_token_cache.json
+.access_token_cache.lock
+
+# Backups automÃ¡ticos com rotaÃ§Ã£o dos dois registros acima (ver
+# src/utils/backup_registros.py, 2026-09-04) - cÃ³pia local de seguranÃ§a,
+# nÃ£o precisa (e nÃ£o deve) ir para o repositÃ³rio.
+backups/
+
+# Pacotes de atualizaÃ§Ã£o gerados por gerar_pacote_atualizacao.py
+# (2026-09-04) - artefato de distribuiÃ§Ã£o, nÃ£o cÃ³digo.
+atualizacoes/
+
+# Locks de arquivo (filelock) dos registros acima - criados/apagados em
+# runtime pelo prÃ³prio filelock (proteÃ§Ã£o contra concorrÃªncia entre a
+# thread do monitor e a thread do painel, ver src/utils/*_registry.py e
+# historico_centros_funcionarios.py) - nunca devem ir para o repositÃ³rio.
+*.lock
+
+# Documentos reais de clientes/funcionÃ¡rios processados pelo agente - nunca
+# devem ir para o repositÃ³rio (dado sensÃ­vel, nÃ£o cÃ³digo). Fixtures de
+# teste jÃ¡ commitadas antes desta regra continuam versionadas normalmente;
+# isso sÃ³ impede que NOVOS arquivos dessas pastas sejam adicionados.
+entrada/
+processados/
+revisao/
+descartados/

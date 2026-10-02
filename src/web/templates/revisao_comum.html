@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% import "_pecas.html" as p %}
+{% set v = form.valores %}
+{% block conteudo %}
+{{ p.cabecalho(('📋 ' if info.dados.tipo_documento == 'prestacao_contas' else '🧾 ') ~ form.tipo_legivel,
+               form.fornecedor or 'Fornecedor não identificado', info, item_id) }}
+
+<div class="grade-revisao">
+  {{ p.visualizador(arquivo, eh_imagem) }}
+
+  <div>
+    {% if erro %}<div class="mensagem mensagem-erro">{{ erro }}</div>{% endif %}
+    {% if form.camada3 %}
+      <div class="mensagem mensagem-aviso"><strong>Fornecedor totalmente novo</strong> — sem histórico local nem na Conta Azul.
+        Categoria e contato abaixo são só um palpite da IA. Confira com atenção antes de aprovar.</div>
+    {% endif %}
+    {{ p.motivo_cartao(motivo, info) }}
+
+    <form action="/revisao/{{ item_id }}/aprovar" method="post" class="cartao formulario">
+      <h2>Dados do lançamento</h2>
+      {{ p.campo_nome(usuario_logado, usuario) }}
+
+      <div class="linha-2">
+        <label>Valor total (R$)
+          <input type="text" name="valor" value="{{ v.valor }}" inputmode="decimal" required>
+        </label>
+        <label>Vencimento (DD/MM/AAAA)
+          <input type="text" name="data_vencimento" value="{{ v.data_vencimento }}" required>
+        </label>
+      </div>
+
+      {{ p.selecao("categoria_id", "Categoria", form.categorias, v.categoria_id,
+                   '📊 Sugestão aprendida (fornecedor já confirmado antes)' if form.origem_categoria == 'aprendida'
+                   else '🤖 Extraído novo (primeira vez que vemos este fornecedor)') }}
+      {{ p.selecao("contato_id", "Contato (fornecedor/colaborador)", form.pessoas, v.contato_id,
+                   'Sugerido pela IA: ' ~ (form.fornecedor or '—')) }}
+      {% if form.contas_financeiras %}
+        {{ p.selecao("conta_financeira_id", "Conta financeira", form.contas_financeiras, v.conta_financeira_id, obrigatorio=False) }}
+      {% endif %}
+
+      {% if form.linhas_rateio %}
+        {{ p.rateio(form.linhas_rateio, form.centros_custo) }}
+      {% elif form.mostrar_fallback %}
+        {{ p.selecao("centro_fallback_id", "Centro de custo (opcional, para o valor inteiro)", form.centros_custo,
+                     v.centro_fallback_id, vazio="(nenhum)", obrigatorio=False) }}
+      {% endif %}
+
+      <label>🔑 Palavras-chave identificadas (separadas por vírgula — aprendizado da IA)
+        <input type="text" name="palavras_chave" value="{{ v.palavras_chave }}">
+        <span class="dica">Ao aprovar, cada palavra reforça a regra global com a categoria, a conta e o centro de custo escolhidos aqui.</span>
+      </label>
+      {% if form.status_palavras %}
+        <ul class="lista-simples dica">
+          {% for s in form.status_palavras %}
+            <li>{{ {'nova': '🆕', 'humano': '✅', 'inferida': '🤖'}[s.tipo] }} <strong>{{ s.palavra }}</strong> — {{ s.texto }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+
+      {{ p.orientacao(v.orientacao, "ex: boletos da Telecom Exemplo Fibra CNPJ ...01 são sempre da filial SP, usar o contato Telecom Exemplo SP") }}
+      {{ p.aviso_duplicata(duplicata) }}
+      {{ p.botoes_aprovar(duplicata) }}
+    </form>
+
+    {{ p.descartar(item_id, usuario_logado, usuario) }}
+  </div>
+</div>
+<script src="/static/revisao.js"></script>
+{% endblock %}

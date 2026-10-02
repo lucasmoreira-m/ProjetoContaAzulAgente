@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entrar · Agente de Lançamentos</title>
+  <link rel="stylesheet" href="/static/estilo.css">
+</head>
+<body class="pagina-login">
+  <main class="login-caixa">
+    <img src="/static/logo.png" alt="Agente de Lançamentos" class="login-logo">
+    <h1>Agente Conta Azul</h1>
+    <p class="subtitulo">Lançamentos automáticos na Conta Azul. Entre com a sua conta Microsoft 365 da empresa.</p>
+
+    {% if erro %}<div class="mensagem mensagem-erro compacta">{{ erro }}</div>{% endif %}
+
+    <a class="botao-microsoft" href="/login/microsoft?voltar={{ voltar|urlencode }}">
+      <svg width="20" height="20" viewBox="0 0 21 21" aria-hidden="true">
+        <rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+        <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+      </svg>
+      Entrar com Microsoft
+    </a>
+
+    <p class="dica login-rodape">
+      {% if ambiente == "producao" %}Ambiente de produção — os lançamentos vão para a Conta Azul real.
+      {% else %}Ambiente de teste — nada aqui afeta a Conta Azul real.{% endif %}
+    </p>
+  </main>
+</body>
+</html>

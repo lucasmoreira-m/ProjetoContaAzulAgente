@@ -1,0 +1,129 @@
+{# Peças compartilhadas pelas telas de revisão (comum, NFS-e, folha, duplicata). #}
+
+{% macro cabecalho(etiqueta, titulo, info, item_id, atualizar=True) %}
+<p class="voltar"><a href="/revisao">← Voltar para a revisão</a></p>
+<div class="cabecalho-item">
+  <div>
+    <span class="etiqueta">{{ etiqueta }}</span>
+    <h1>{{ titulo }}</h1>
+    <p class="subtitulo">{{ info.documento_original }} · enviado por {{ info.enviado_por or '—' }} · processado em {{ info.processado_em or '—' }}</p>
+  </div>
+  {% if atualizar %}
+  <form action="/cadastros/atualizar" method="post">
+    <input type="hidden" name="voltar" value="/revisao/{{ item_id }}">
+    <button type="submit" class="botao-claro" title="Use logo depois de criar um contato, categoria ou centro de custo na Conta Azul">↻ Atualizar cadastros</button>
+  </form>
+  {% endif %}
+</div>
+{% endmacro %}
+
+{% macro visualizador(arquivo, eh_imagem) %}
+<section class="cartao visualizador">
+  {% if arquivo and eh_imagem %}
+    <img src="/documento/revisao/{{ arquivo|urlencode }}" alt="Documento">
+  {% elif arquivo %}
+    <iframe src="/documento/revisao/{{ arquivo|urlencode }}" title="Documento"></iframe>
+    <p class="subtitulo"><a href="/documento/revisao/{{ arquivo|urlencode }}" target="_blank" rel="noopener">Abrir o PDF em outra aba</a></p>
+  {% else %}
+    <div class="mensagem mensagem-aviso">Arquivo original não encontrado ao lado do registro. Se a pasta está no OneDrive, confira se terminou de sincronizar.</div>
+  {% endif %}
+</section>
+{% endmacro %}
+
+{% macro motivo_cartao(motivo, info, titulo="Motivo da revisão") %}
+<section class="cartao">
+  <h2>{{ titulo }}</h2>
+  {% for m in motivo %}
+    <div class="mensagem {{ 'mensagem-aviso' if m.tipo == 'seguranca' else 'mensagem-erro' }} compacta">
+      {% if m.titulo %}<strong>{{ '🛡️' if m.tipo == 'seguranca' else '⚠️' }} {{ m.titulo }}</strong><br>{% endif %}{{ m.texto }}
+    </div>
+  {% endfor %}
+  {% if info.cadastros_pendentes %}
+    <p class="subtitulo">Faltando na Conta Azul:</p>
+    <ul class="lista-simples">
+      {% for c in info.cadastros_pendentes %}
+        <li><strong>{{ c.nome_no_documento }}</strong> ({{ c.tipo }}){% if c.sugestao_parecida %} — parecido com “{{ c.sugestao_parecida }}”{% endif %}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</section>
+{% endmacro %}
+
+{% macro campo_nome(usuario_logado, usuario) %}
+{% if not usuario_logado %}
+  <label>Seu nome (fica registrado como quem aprovou)
+    <input type="text" name="aprovado_por" value="{{ usuario or '' }}" required>
+  </label>
+{% endif %}
+{% endmacro %}
+
+{% macro selecao(nome, rotulo, lista, selecionado, dica=None, vazio=None, obrigatorio=True) %}
+<label>{{ rotulo }}
+  <select name="{{ nome }}" {{ 'required' if obrigatorio }}>
+    {% if vazio %}<option value="">{{ vazio }}</option>{% endif %}
+    {% for x in lista %}<option value="{{ x.id }}" {{ 'selected' if x.id == selecionado }}>{{ x.nome }}</option>{% endfor %}
+  </select>
+  {% if dica %}<span class="dica">{{ dica }}</span>{% endif %}
+</label>
+{% endmacro %}
+
+{% macro rateio(linhas, centros) %}
+{% if linhas %}
+<fieldset class="rateio">
+  <legend>Rateio por centro de custo</legend>
+  <p class="dica">Para cada linha, confirme o centro de custo real. Linhas desmarcadas ou com valor zero não entram no lançamento.</p>
+  <table class="tabela-rateio">
+    <thead><tr><th></th><th>No documento</th><th>Centro de custo</th><th>Valor</th></tr></thead>
+    <tbody>
+      {% for l in linhas %}
+        <tr>
+          <td><input type="checkbox" name="rateio_{{ l.i }}_incluir" class="rateio-incluir" {{ 'checked' if l.incluir }}
+               title="{{ 'Desmarque para excluir esta linha' if l.tipo_match == 'exato' else 'O nome não bate exatamente - confira o centro antes de marcar' }}"></td>
+          <td>{% if l.aviso %}<span class="estado estado-revisao">{{ l.aviso }}</span>
+              {% else %}{{ l.nome_doc }}{% if l.tipo_match != 'exato' %} <span class="estado estado-revisao">conferir</span>{% endif %}{% endif %}</td>
+          <td><select name="rateio_{{ l.i }}_centro_id">
+            {% for c in centros %}<option value="{{ c.id }}" {{ 'selected' if c.id == l.centro_id }}>{{ c.nome }}</option>{% endfor %}
+          </select></td>
+          <td><input type="text" name="rateio_{{ l.i }}_valor" class="rateio-valor" value="{{ l.valor }}" inputmode="decimal"></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="dica soma-rateio"></p>
+</fieldset>
+{% endif %}
+{% endmacro %}
+
+{% macro orientacao(valor, texto_exemplo) %}
+<label>🗣️ Orientação para os próximos lançamentos (opcional — aprendizado da IA)
+  <textarea name="orientacao" rows="3" placeholder="{{ texto_exemplo }}">{{ valor }}</textarea>
+  <span class="dica">Vale a partir do próximo documento deste tipo. Não altera este lançamento.</span>
+</label>
+{% endmacro %}
+
+{% macro aviso_duplicata(duplicata) %}
+{% if duplicata %}
+  <div class="mensagem mensagem-erro">
+    <strong>⚠️ Possível duplicata:</strong> já existe um lançamento na Conta Azul com este valor e vencimento
+    (id {{ duplicata.id }}, status {{ duplicata.status }}). <strong>Nada foi lançado.</strong>
+    Só use o botão vermelho se tiver certeza de que não é a mesma cobrança.
+  </div>
+{% endif %}
+{% endmacro %}
+
+{% macro botoes_aprovar(duplicata, rotulo="✓ Aprovar e lançar") %}
+<div class="acoes">
+  <button type="submit" class="primario">{{ rotulo }}</button>
+  {% if duplicata %}
+    <button type="submit" name="forcar" value="1" class="perigo">Confirmo que não é duplicata — lançar mesmo assim</button>
+  {% endif %}
+</div>
+{% endmacro %}
+
+{% macro descartar(item_id, usuario_logado, usuario, rotulo="Descartar documento") %}
+<form action="/revisao/{{ item_id }}/descartar" method="post" class="form-descartar"
+      onsubmit="return confirm('Descartar este documento? Ele vai para a pasta de descartados e não será lançado.');">
+  {% if not usuario_logado %}<input type="hidden" name="aprovado_por" value="{{ usuario or '' }}">{% endif %}
+  <button type="submit" class="botao-perigo-claro">🗑 {{ rotulo }}</button>
+</form>
+{% endmacro %}

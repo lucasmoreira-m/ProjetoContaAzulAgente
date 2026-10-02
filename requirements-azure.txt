@@ -1,0 +1,7 @@
+# Dependências da imagem do painel no Azure Container Apps (Dockerfile,
+# 2026-10-01): as mesmas versões fixadas do requirements.txt, mais as
+# bibliotecas do Key Vault (segredos lidos com a identidade gerenciada).
+-r requirements.txt
+
+azure-identity==1.25.3
+azure-keyvault-secrets==4.11.2

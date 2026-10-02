@@ -1,0 +1,2 @@
+# PDFs de teste (tests/fixtures) são binários: sem conversão de fim de linha.
+*.pdf binary

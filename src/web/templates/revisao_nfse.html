@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% import "_pecas.html" as p %}
+{% set v = form.valores %}
+{% block conteudo %}
+{{ p.cabecalho('🧾 NFS-e ' ~ (form.numero_nota or '?'), form.fornecedor or 'Prestador não identificado', info, item_id) }}
+
+<div class="grade-revisao">
+  {{ p.visualizador(arquivo, eh_imagem) }}
+
+  <div>
+    {% if erro %}<div class="mensagem mensagem-erro">{{ erro }}</div>{% endif %}
+    {{ p.motivo_cartao(motivo, info) }}
+
+    <section class="cartao">
+      <h2>Dados da nota</h2>
+      <p class="dica"><strong>Discriminação dos serviços:</strong> {{ form.discriminacao or '—' }}</p>
+      <p class="dica"><strong>Código do serviço:</strong> {{ form.codigo_servico or '—' }} — {{ form.descricao_codigo_servico or 'sem descrição' }}</p>
+    </section>
+
+    <form action="/revisao/{{ item_id }}/aprovar" method="post" class="cartao formulario">
+      <h2>Dados do lançamento</h2>
+      {{ p.campo_nome(usuario_logado, usuario) }}
+
+      <div class="linha-3">
+        <label>Valor do serviço (R$)
+          <input type="text" name="valor" value="{{ v.valor }}" inputmode="decimal" required>
+        </label>
+        <label>Vencimento (DD/MM/AAAA)
+          <input type="text" name="data_vencimento" value="{{ v.data_vencimento }}" required>
+        </label>
+        <label>Competência (DD/MM/AAAA)
+          <input type="text" name="data_competencia" value="{{ v.data_competencia }}">
+        </label>
+      </div>
+
+      {% if form.valor_imposto %}
+        <div class="linha-2">
+          <label>Imposto retido (R$)
+            <input type="text" value="{{ form.valor_imposto|brl }}" disabled>
+          </label>
+          <label>Valor líquido (R$)
+            <input type="text" name="valor_liquido" value="{{ v.valor_liquido }}" inputmode="decimal" required>
+          </label>
+        </div>
+        <p class="dica confere-liquido" data-imposto="{{ form.valor_imposto }}"></p>
+      {% endif %}
+
+      <label>Descrição do lançamento
+        <input type="text" name="descricao" value="{{ v.descricao }}" required>
+        <span class="dica">É o texto que vai para a Conta Azul. Pode corrigir aqui.</span>
+      </label>
+
+      <div class="linha-2">
+        {{ p.selecao("categoria_id", "Categoria", form.categorias, v.categoria_id) }}
+        {{ p.selecao("contato_id", "Contato/Fornecedor", form.pessoas, v.contato_id, 'Na nota: ' ~ (form.fornecedor or '—')) }}
+      </div>
+
+      {% if form.modo_banco == 'boleto' %}
+        <div class="mensagem mensagem-ok compacta">Nota com boleto anexado — pagamento sempre pelo Banco Alfa, vencimento igual ao do boleto.</div>
+      {% elif form.modo_banco == 'reconhecido' %}
+        <div class="mensagem mensagem-ok compacta">Banco reconhecido automaticamente para este fornecedor: <strong>{{ form.banco_reconhecido }}</strong>.</div>
+      {% else %}
+        <div class="mensagem mensagem-aviso compacta">🟡 Fornecedor sem boleto e sem padrão de banco conhecido — escolha manualmente.
+          Essa escolha vira a base para os próximos lançamentos deste fornecedor (aprendizado).</div>
+        <label>Banco de pagamento
+          <select name="banco" required>
+            <option value="alfa" {{ 'selected' if v.banco == 'alfa' }}>Banco Alfa</option>
+            <option value="beta" {{ 'selected' if v.banco == 'beta' }}>Beta</option>
+          </select>
+        </label>
+      {% endif %}
+
+      {{ p.rateio(form.linhas_rateio, form.centros_custo) }}
+      {{ p.orientacao(v.orientacao, "ex: notas da Telecom Exemplo com CNPJ ...01 são sempre da filial SP") }}
+      {{ p.aviso_duplicata(duplicata) }}
+      {{ p.botoes_aprovar(duplicata) }}
+    </form>
+
+    {{ p.descartar(item_id, usuario_logado, usuario) }}
+  </div>
+</div>
+<script src="/static/revisao.js"></script>
+{% endblock %}

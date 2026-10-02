@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block conteudo %}
+{% if andamento %}
+  <meta http-equiv="refresh" content="5">
+  <div class="mensagem mensagem-aviso aguarde-faixa"><span class="girando"></span>
+    Processando {{ andamento.qtd }} arquivo(s) — acionado por {{ andamento.por }} às {{ andamento.desde[-5:] }}.
+    Pode continuar usando o painel; esta página se atualiza sozinha.</div>
+{% endif %}
+<div class="resumo">
+  <div class="numero-cartao">
+    <div class="numero-valor">{{ arquivos|length }}</div>
+    <div class="numero-rotulo">Aguardando processamento</div>
+  </div>
+  <a class="numero-cartao dourado" href="/revisao">
+    <div class="numero-valor">{{ qtd_revisao }}</div>
+    <div class="numero-rotulo">Aguardando revisão</div>
+  </a>
+  <a class="numero-cartao marinho" href="/processados">
+    <div class="numero-valor">{{ qtd_processados }}</div>
+    <div class="numero-rotulo">Lançados na Conta Azul</div>
+  </a>
+</div>
+
+<section class="cartao">
+  <div class="cartao-cabecalho">
+    <div>
+      <h2>Enviar documentos</h2>
+      <p class="subtitulo">PDF, JPG ou PNG, até 25 MB cada. Vários de uma vez.</p>
+    </div>
+  </div>
+  <form action="/entrada/enviar" method="post" enctype="multipart/form-data" class="form-envio">
+    {% if not usuario_logado %}
+      <label>Seu nome
+        <input type="text" name="nome" value="{{ usuario or '' }}" required>
+      </label>
+    {% endif %}
+    <label>Arquivos
+      <span class="soltar"><input type="file" name="arquivos" accept="{{ extensoes }}" multiple required></span>
+    </label>
+    <button type="submit">Enviar</button>
+  </form>
+</section>
+
+<section class="cartao">
+  <div class="cartao-cabecalho">
+    <div>
+      <h2>Aguardando processamento</h2>
+      <p class="subtitulo">O botão processa o que está aqui agora e para. O que chegar depois fica para o próximo clique.</p>
+    </div>
+    <form action="/entrada/processar" method="post" id="form-processar">
+      <button type="submit" class="primario" {{ 'disabled' if not arquivos or andamento }}>
+        {% if andamento %}Processando…{% else %}▶ Processar entrada ({{ arquivos|length }}){% endif %}
+      </button>
+    </form>
+  </div>
+
+  {% if arquivos %}
+    <div class="tabela-rolagem">
+      <table>
+        <thead><tr><th>Arquivo</th><th>Enviado por</th><th>Enviado em</th></tr></thead>
+        <tbody>
+          {% for a in arquivos %}
+            <tr><td>📄 {{ a.nome }}</td><td>{{ a.dono }}</td><td>{{ a.enviado_em }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="vazio">A pasta de entrada está vazia.</p>
+  {% endif %}
+</section>
+
+{% if ultimo %}
+<section class="cartao">
+  <div class="cartao-cabecalho">
+    <div>
+      <h2>Último processamento</h2>
+      <p class="subtitulo">{{ ultimo.quando }} · acionado por {{ ultimo.por }}
+        {% if ultimo.itens %} · {{ ultimo.lancados }} lançado(s), {{ ultimo.itens|length - ultimo.lancados }} para revisão{% endif %}</p>
+    </div>
+  </div>
+  {% if ultimo.erro %}
+    <div class="mensagem mensagem-erro compacta">{{ ultimo.erro }}</div>
+  {% elif ultimo.itens %}
+    <div class="tabela-rolagem">
+      <table>
+        <thead><tr><th>Resultado</th><th>Arquivo</th><th>Enviado por</th><th>Detalhe</th></tr></thead>
+        <tbody>
+          {% for i in ultimo.itens %}
+            <tr>
+              <td>{% if i.sucesso %}<span class="estado estado-ok">Lançado</span>{% else %}<span class="estado estado-revisao">Revisão</span>{% endif %}</td>
+              <td>{{ i.arquivo }}</td><td>{{ i.usuario }}</td>
+              <td class="motivo">{{ i.motivo or '' }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="vazio">A entrada estava vazia.</p>
+  {% endif %}
+</section>
+{% endif %}
+
+<script>
+  // Evita clique duplo no botão de processar.
+  document.getElementById("form-processar").addEventListener("submit", function () {
+    setTimeout(() => (this.querySelector("button").disabled = true), 0);
+  });
+</script>
+{% endblock %}
